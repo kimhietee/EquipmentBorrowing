@@ -1,0 +1,11 @@
+bin/
+obj/
+
+.vs/
+*.user
+*.suo
+
+.idea/
+.vscode/
+
+[Tt]est[Rr]esult*/
