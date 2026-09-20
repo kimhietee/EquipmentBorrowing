@@ -10,4 +10,5 @@ public interface IBorrowingRepository
 
     Task<int> CountActiveBorrowingsByStudentAsync(int studentId, CancellationToken cancellationToken = default);
     Task<Borrowing?> GetByIdAsync(int id, CancellationToken cancellationToken = default);
+    Task<List<Borrowing>> GetActiveBorrowingsAsync(CancellationToken cancellationToken = default);
 }

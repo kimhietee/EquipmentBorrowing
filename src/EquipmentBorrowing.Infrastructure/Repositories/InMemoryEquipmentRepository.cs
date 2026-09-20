@@ -20,4 +20,8 @@ public class InMemoryEquipmentRepository : IEquipmentRepository
     {
         return Task.FromResult(_equipment.FirstOrDefault(e => e.Id == id));
     }
+    public Task<List<Equipment>> GetAllAsync(CancellationToken cancellationToken = default)
+    {
+        return Task.FromResult(_equipment.ToList());
+    }
 }

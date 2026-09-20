@@ -9,14 +9,13 @@
         Icon="/Assets/avalonia-logo.ico"
         Title="EquipmentBorrowing.Desktop">
 
-    <Design.DataContext>
-        <!-- This only sets the DataContext for the previewer in an IDE,
-             to set the actual DataContext for runtime, set the DataContext property in code (look at App.axaml.cs) -->
-        <vm:MainViewModel />
-    </Design.DataContext>
-
-    <TextBox Text="{Binding Greeting}"
-             HorizontalAlignment="Center"
-             VerticalAlignment="Center" />
+    <Grid ColumnDefinitions="180,*">
+    <StackPanel Grid.Column="0" Background="#1e1e1e" Spacing="6" Margin="10">
+        <TextBlock Text="Campus Equipment" FontWeight="Bold" Foreground="White" Margin="0,0,0,12"/>
+        <Button Content="Equipment" Command="{Binding ShowEquipmentCommand}" HorizontalAlignment="Stretch"/>
+        <Button Content="Active Borrowings" Command="{Binding ShowBorrowingsCommand}" HorizontalAlignment="Stretch"/>
+    </StackPanel>
+    <ContentControl Grid.Column="1" Content="{Binding CurrentPage}" Margin="16"/>
+</Grid>
 
 </Window>
