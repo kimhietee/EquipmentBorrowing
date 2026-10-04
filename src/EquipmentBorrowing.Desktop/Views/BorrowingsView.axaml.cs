@@ -14,4 +14,4 @@ public partial class BorrowingsView : UserControl
                 await vm.LoadCommand.ExecuteAsync(null);
         };
     }
-}
+}  
