@@ -1,9 +1,6 @@
-﻿using System;
-using System.Threading.Tasks;
-using EquipmentBorrowing.Application.Services;
+﻿using EquipmentBorrowing.Application.Services;
 using EquipmentBorrowing.Domain;
 using EquipmentBorrowing.Infrastructure.Repositories;
-using Xunit;
 
 namespace EquipmentBorrowing.Tests;
 
@@ -13,28 +10,22 @@ public class BorrowEquipmentServiceTests
     {
         var students = new InMemoryStudentRepository(new[]
         {
-            new Student(1, "Juan Dela Cruz", isAllowedToBorrow: true),
-            new Student(2, "Maria Santos", isAllowedToBorrow: false)
+            new Student(1, "2026-0001", "Juan Dela Cruz", true),
+            new Student(2, "2026-0002", "Maria Santos", false)
         });
-
         var equipment = new InMemoryEquipmentRepository(new[]
         {
-            new Equipment(101, "Digital Multimeter", isAvailable: true),
-            new Equipment(102, "Oscilloscope", isAvailable: false)
+            new Equipment(101, "Digital Multimeter", "Instrument", true),
+            new Equipment(102, "Oscilloscope", "Instrument", false)
         });
-
-        var borrowings = new InMemoryBorrowingRepository();
-
-        return new BorrowEquipmentService(students, equipment, borrowings, maxActiveBorrowingsPerStudent: 2);
+        return new BorrowEquipmentService(students, equipment,
+            new InMemoryBorrowingRepository(), new InMemoryUnitOfWork(), 2);
     }
 
     [Fact]
     public async Task Borrow_Succeeds_WhenAllRulesAreSatisfied()
     {
-        var service = BuildService();
-
-        var result = await service.BorrowAsync(studentId: 1, equipmentId: 101, expectedReturnDate: DateTime.Now.AddDays(7));
-
+        var result = await BuildService().BorrowAsync(1, 101, DateTime.Now.AddDays(7));
         Assert.True(result.Success);
         Assert.NotNull(result.Borrowing);
         Assert.Equal(BorrowingStatus.Active, result.Borrowing!.Status);
@@ -43,10 +34,7 @@ public class BorrowEquipmentServiceTests
     [Fact]
     public async Task Borrow_Fails_WhenEquipmentIsUnavailable()
     {
-        var service = BuildService();
-
-        var result = await service.BorrowAsync(studentId: 1, equipmentId: 102, expectedReturnDate: DateTime.Now.AddDays(7));
-
+        var result = await BuildService().BorrowAsync(1, 102, DateTime.Now.AddDays(7));
         Assert.False(result.Success);
         Assert.Equal("Equipment is not currently available.", result.Message);
     }
@@ -54,10 +42,7 @@ public class BorrowEquipmentServiceTests
     [Fact]
     public async Task Borrow_Fails_WhenStudentIsNotAllowedToBorrow()
     {
-        var service = BuildService();
-
-        var result = await service.BorrowAsync(studentId: 2, equipmentId: 101, expectedReturnDate: DateTime.Now.AddDays(7));
-
+        var result = await BuildService().BorrowAsync(2, 101, DateTime.Now.AddDays(7));
         Assert.False(result.Success);
         Assert.Equal("Student is not currently allowed to borrow equipment.", result.Message);
     }
@@ -65,15 +50,15 @@ public class BorrowEquipmentServiceTests
     [Fact]
     public async Task Borrow_Fails_WhenStudentReachesMaxActiveBorrowings()
     {
-        var students = new InMemoryStudentRepository(new[] { new Student(1, "Juan Dela Cruz") });
+        var students = new InMemoryStudentRepository(new[] { new Student(1, "2026-0001", "Juan Dela Cruz") });
         var equipmentRepo = new InMemoryEquipmentRepository(new[]
         {
-            new Equipment(101, "Multimeter"),
-            new Equipment(102, "Breadboard"),
-            new Equipment(103, "Function Generator")
+            new Equipment(101, "Multimeter", "Instrument"),
+            new Equipment(102, "Breadboard", "Component"),
+            new Equipment(103, "Function Generator", "Instrument")
         });
-        var borrowingRepo = new InMemoryBorrowingRepository();
-        var service = new BorrowEquipmentService(students, equipmentRepo, borrowingRepo, maxActiveBorrowingsPerStudent: 2);
+        var service = new BorrowEquipmentService(students, equipmentRepo,
+            new InMemoryBorrowingRepository(), new InMemoryUnitOfWork(), 2);
 
         await service.BorrowAsync(1, 101, DateTime.Now.AddDays(7));
         await service.BorrowAsync(1, 102, DateTime.Now.AddDays(7));

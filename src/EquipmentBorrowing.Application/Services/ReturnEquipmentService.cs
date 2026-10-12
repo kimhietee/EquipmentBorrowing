@@ -1,6 +1,5 @@
-﻿using System.Threading;
-using System.Threading.Tasks;
-using EquipmentBorrowing.Application.Interfaces;
+﻿using EquipmentBorrowing.Application.Interfaces;
+using EquipmentBorrowing.Domain;
 
 namespace EquipmentBorrowing.Application.Services;
 
@@ -8,13 +7,16 @@ public class ReturnEquipmentService
 {
     private readonly IBorrowingRepository _borrowingRepository;
     private readonly IEquipmentRepository _equipmentRepository;
+    private readonly IUnitOfWork _unitOfWork;
 
     public ReturnEquipmentService(
         IBorrowingRepository borrowingRepository,
-        IEquipmentRepository equipmentRepository)
+        IEquipmentRepository equipmentRepository,
+        IUnitOfWork unitOfWork)
     {
         _borrowingRepository = borrowingRepository;
         _equipmentRepository = equipmentRepository;
+        _unitOfWork = unitOfWork;
     }
 
     public async Task<ReturnResult> ReturnAsync(int borrowingId, CancellationToken cancellationToken = default)
@@ -23,14 +25,15 @@ public class ReturnEquipmentService
         if (borrowing is null)
             return ReturnResult.Fail("Borrowing record not found.");
 
-        if (borrowing.Status == Domain.BorrowingStatus.Returned)
+        if (borrowing.Status == BorrowingStatus.Returned)
             return ReturnResult.Fail("This borrowing has already been returned.");
 
-        borrowing.MarkAsReturned();
+        borrowing.MarkAsReturned(DateTime.Now);
 
         var equipment = await _equipmentRepository.GetByIdAsync(borrowing.EquipmentId, cancellationToken);
         equipment?.MarkAsAvailable();
 
+        await _unitOfWork.SaveChangesAsync(cancellationToken);
         return ReturnResult.Ok(borrowing);
     }
 }
