@@ -1,8 +1,5 @@
-﻿using System.Collections.Generic;
-using System.Linq;
-using System.Threading;
-using System.Threading.Tasks;
 using EquipmentBorrowing.Application.Interfaces;
+using EquipmentBorrowing.Application.Models;
 using EquipmentBorrowing.Domain;
 
 namespace EquipmentBorrowing.Infrastructure.Repositories;
@@ -18,17 +15,14 @@ public class InMemoryBorrowingRepository : IBorrowingRepository
     }
 
     public Task<int> CountActiveBorrowingsByStudentAsync(int studentId, CancellationToken cancellationToken = default)
-    {
-        var count = _borrowings.Count(b => b.StudentId == studentId && b.Status == BorrowingStatus.Active);
-        return Task.FromResult(count);
-    }
+        => Task.FromResult(_borrowings.Count(b => b.StudentId == studentId && b.Status == BorrowingStatus.Active));
+
     public Task<Borrowing?> GetByIdAsync(int id, CancellationToken cancellationToken = default)
-    {
-        return Task.FromResult(_borrowings.FirstOrDefault(b => b.Id == id));
-    }
+        => Task.FromResult(_borrowings.FirstOrDefault(b => b.Id == id));
+
     public Task<List<Borrowing>> GetActiveBorrowingsAsync(CancellationToken cancellationToken = default)
-    {
-        var active = _borrowings.Where(b => b.Status == BorrowingStatus.Active).ToList();
-        return Task.FromResult(active);
-    }
+        => Task.FromResult(_borrowings.Where(b => b.Status == BorrowingStatus.Active).ToList());
+
+    public Task<List<ActiveBorrowingDetails>> GetActiveBorrowingDetailsAsync(CancellationToken cancellationToken = default)
+        => throw new NotSupportedException("The in-memory repository has no student/equipment data to join. Use the EF Core repository.");
 }
