@@ -10,10 +10,11 @@
             <ListBox.ItemTemplate>
                 <DataTemplate>
                     <StackPanel Orientation="Horizontal" Spacing="10">
-                        <TextBlock Text="{Binding Id}" Width="40"/>
-                        <TextBlock Text="{Binding StudentId}" Width="80"/>
-                        <TextBlock Text="{Binding EquipmentId}" Width="80"/>
-                        <TextBlock Text="{Binding ExpectedReturnDate}"/>
+                        <TextBlock Text="{Binding BorrowingId}" Width="40"/>
+                        <TextBlock Text="{Binding StudentName}" Width="140"/>
+                        <TextBlock Text="{Binding EquipmentName}" Width="160"/>
+                        <TextBlock Text="{Binding DateBorrowed, StringFormat={}{0:yyyy-MM-dd}}" Width="100"/>
+                        <TextBlock Text="{Binding ExpectedReturnDate, StringFormat={}{0:yyyy-MM-dd}}"/>
                     </StackPanel>
                 </DataTemplate>
             </ListBox.ItemTemplate>
