@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.ObjectModel;
 using System.Threading.Tasks;
 using CommunityToolkit.Mvvm.ComponentModel;
@@ -22,6 +22,7 @@ public partial class EquipmentViewModel : ViewModelBase
     [ObservableProperty] private Student? selectedStudent;
     [ObservableProperty] private DateTimeOffset expectedReturnDate = DateTimeOffset.Now.AddDays(7);
     [ObservableProperty] private string? statusMessage;
+    [ObservableProperty] private bool showOnlyAvailable;
 
     public EquipmentViewModel(
         IEquipmentRepository equipmentRepository,
@@ -33,11 +34,17 @@ public partial class EquipmentViewModel : ViewModelBase
         _borrowEquipmentService = borrowEquipmentService;
     }
 
+    partial void OnShowOnlyAvailableChanged(bool value) => _ = LoadAsync();
+
     [RelayCommand]
     private async Task LoadAsync()
     {
+        var items = ShowOnlyAvailable
+            ? await _equipmentRepository.GetAvailableAsync()
+            : await _equipmentRepository.GetAllAsync();
+
         EquipmentList.Clear();
-        foreach (var item in await _equipmentRepository.GetAllAsync())
+        foreach (var item in items)
             EquipmentList.Add(item);
 
         Students.Clear();

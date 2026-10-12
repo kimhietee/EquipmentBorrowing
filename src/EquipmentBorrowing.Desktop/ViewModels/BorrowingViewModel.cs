@@ -1,10 +1,10 @@
-﻿using System.Collections.ObjectModel;
+using System.Collections.ObjectModel;
 using System.Threading.Tasks;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using EquipmentBorrowing.Application.Interfaces;
+using EquipmentBorrowing.Application.Models;
 using EquipmentBorrowing.Application.Services;
-using EquipmentBorrowing.Domain;
 
 namespace EquipmentBorrowing.Desktop.ViewModels;
 
@@ -13,9 +13,9 @@ public partial class BorrowingsViewModel : ViewModelBase
     private readonly IBorrowingRepository _borrowingRepository;
     private readonly ReturnEquipmentService _returnEquipmentService;
 
-    public ObservableCollection<Borrowing> ActiveBorrowings { get; } = new();
+    public ObservableCollection<ActiveBorrowingDetails> ActiveBorrowings { get; } = new();
 
-    [ObservableProperty] private Borrowing? selectedBorrowing;
+    [ObservableProperty] private ActiveBorrowingDetails? selectedBorrowing;
     [ObservableProperty] private string? statusMessage;
 
     public BorrowingsViewModel(IBorrowingRepository borrowingRepository, ReturnEquipmentService returnEquipmentService)
@@ -27,16 +27,17 @@ public partial class BorrowingsViewModel : ViewModelBase
     [RelayCommand]
     private async Task LoadAsync()
     {
+        var items = await _borrowingRepository.GetActiveBorrowingDetailsAsync();
         ActiveBorrowings.Clear();
-        foreach (var borrowing in await _borrowingRepository.GetActiveBorrowingsAsync())
-            ActiveBorrowings.Add(borrowing);
+        foreach (var item in items)
+            ActiveBorrowings.Add(item);
     }
 
     [RelayCommand]
     private async Task ReturnAsync()
     {
         if (SelectedBorrowing is null) { StatusMessage = "Please select a borrowing to return."; return; }
-        var result = await _returnEquipmentService.ReturnAsync(SelectedBorrowing.Id);
+        var result = await _returnEquipmentService.ReturnAsync(SelectedBorrowing.BorrowingId);
         StatusMessage = result.Message;
         if (result.Success) await LoadAsync();
     }

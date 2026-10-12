@@ -1,11 +1,14 @@
-﻿using Avalonia;
+using System;
+using System.IO;
+using System.Threading.Tasks;
+using Avalonia;
 using Avalonia.Controls.ApplicationLifetimes;
 using Avalonia.Markup.Xaml;
+using EquipmentBorrowing.Application.Services;
 using EquipmentBorrowing.Desktop.ViewModels;
 using EquipmentBorrowing.Desktop.Views;
-using EquipmentBorrowing.Application.Services;
-using EquipmentBorrowing.Domain;
-using EquipmentBorrowing.Infrastructure.Repositories;
+using EquipmentBorrowing.Infrastructure;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace EquipmentBorrowing.Desktop;
 
@@ -20,32 +23,34 @@ public partial class App : Avalonia.Application
     {
         if (ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktop)
         {
-            var studentRepository = new InMemoryStudentRepository(new[]
-            {
-                new Student(1, "2026-0001", "Juan Dela Cruz", true),
-                new Student(2, "2026-0002", "Maria Santos", true)
-            });
+            // Stable location, so data survives restarts: %LOCALAPPDATA%\EquipmentBorrowing\
+            var folder = Path.Combine(
+                Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
+                "EquipmentBorrowing");
+            Directory.CreateDirectory(folder);
+            var dbPath = Path.Combine(folder, "equipmentborrowing.db");
 
-            var equipmentRepository = new InMemoryEquipmentRepository(new[]
-            {
-                new Equipment(101, "Digital Multimeter", "Instrument", true),
-                new Equipment(102, "Oscilloscope", "Instrument", true),
-                new Equipment(103, "Function Generator", "Instrument", true)
-            });
+            // Composition root.
+            var services = new ServiceCollection();
+            services.AddInfrastructure($"Data Source={dbPath}");
+            services.AddScoped<BorrowEquipmentService>();
+            services.AddScoped<ReturnEquipmentService>();
+            services.AddScoped<EquipmentViewModel>();
+            services.AddScoped<BorrowingsViewModel>();
+            services.AddScoped<MainViewModel>();
 
-            var borrowingRepository = new InMemoryBorrowingRepository();
-            var uow = new InMemoryUnitOfWork();
+            // A desktop app has no per-request scope, so one scope lives for the whole app.
+            var scope = services.BuildServiceProvider().CreateScope();
 
-            var borrowEquipmentService = new BorrowEquipmentService(studentRepository, equipmentRepository, borrowingRepository, uow, 3);
-            var returnEquipmentService = new ReturnEquipmentService(borrowingRepository, equipmentRepository, uow);
-
-            var equipmentViewModel = new EquipmentViewModel(equipmentRepository, studentRepository, borrowEquipmentService);
-            var borrowingsViewModel = new BorrowingsViewModel(borrowingRepository, returnEquipmentService);
+            // Apply pending migrations and seed (only if empty) before showing the UI.
+            Task.Run(() => InfrastructureSetup.InitializeDatabaseAsync(scope.ServiceProvider))
+                .GetAwaiter().GetResult();
 
             desktop.MainWindow = new MainWindow
             {
-                DataContext = new MainViewModel(equipmentViewModel, borrowingsViewModel),
+                DataContext = scope.ServiceProvider.GetRequiredService<MainViewModel>(),
             };
+            desktop.Exit += (_, _) => scope.Dispose();
         }
 
         base.OnFrameworkInitializationCompleted();
