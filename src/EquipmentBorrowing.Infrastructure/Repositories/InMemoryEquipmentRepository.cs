@@ -1,7 +1,3 @@
-﻿using System.Collections.Generic;
-using System.Linq;
-using System.Threading;
-using System.Threading.Tasks;
 using EquipmentBorrowing.Application.Interfaces;
 using EquipmentBorrowing.Domain;
 
@@ -17,11 +13,11 @@ public class InMemoryEquipmentRepository : IEquipmentRepository
     }
 
     public Task<Equipment?> GetByIdAsync(int id, CancellationToken cancellationToken = default)
-    {
-        return Task.FromResult(_equipment.FirstOrDefault(e => e.Id == id));
-    }
+        => Task.FromResult(_equipment.FirstOrDefault(e => e.Id == id));
+
     public Task<List<Equipment>> GetAllAsync(CancellationToken cancellationToken = default)
-    {
-        return Task.FromResult(_equipment.ToList());
-    }
+        => Task.FromResult(_equipment.ToList());
+
+    public Task<List<Equipment>> GetAvailableAsync(CancellationToken cancellationToken = default)
+        => Task.FromResult(_equipment.Where(e => e.IsAvailable).ToList());
 }
