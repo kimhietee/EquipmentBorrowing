@@ -1,5 +1,5 @@
 <Solution>
-  <Project Path="EquipmentBorrowing.Console/EquipmentBorrowing.Console.csproj" Id="eb9ae1c7-8f82-43fa-a592-b834883a08fe" />
+
   <Project Path="src/EquipmentBorrowing.Application/EquipmentBorrowing.Application.csproj" />
   <Project Path="src/EquipmentBorrowing.Desktop/EquipmentBorrowing.Desktop.csproj" Id="ef8cdd84-93f0-4664-8131-7ca89344a7c2" />
   <Project Path="src/EquipmentBorrowing.Domain/EquipmentBorrowing.Domain.csproj" />
