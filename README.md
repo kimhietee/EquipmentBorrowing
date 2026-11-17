@@ -73,7 +73,7 @@ borrow happen?" decision is made.
 
 ## 1. Relational Database Design
 
-![Database diagram](docs/database-diagram.png)
+![Database diagram](src/docs/database-diagram.png)
 
 | Table | Key columns | Constraints |
 |---|---|---|
