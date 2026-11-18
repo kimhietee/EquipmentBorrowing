@@ -1,3 +1,4 @@
+using Microsoft.Extensions.Configuration;
 using System;
 using System.IO;
 using System.Threading.Tasks;
@@ -23,16 +24,21 @@ public partial class App : Avalonia.Application
     {
         if (ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktop)
         {
-            // Stable location, so data survives restarts: %LOCALAPPDATA%\EquipmentBorrowing\
-            var folder = Path.Combine(
-                Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
-                "EquipmentBorrowing");
-            Directory.CreateDirectory(folder);
-            var dbPath = Path.Combine(folder, "equipmentborrowing.db");
+            // Read config: appsettings.json (placeholder), then user-secrets (real password),
+            // then environment variables. Later sources override earlier ones.
+            var configuration = new ConfigurationBuilder()
+                .SetBasePath(AppContext.BaseDirectory)
+                .AddJsonFile("appsettings.json", optional: false)
+                .AddUserSecrets<App>(optional: true)
+                .AddEnvironmentVariables()
+                .Build();
+
+            var connectionString = configuration.GetConnectionString("Default")
+                ?? throw new InvalidOperationException("Missing ConnectionStrings:Default.");
 
             // Composition root.
             var services = new ServiceCollection();
-            services.AddInfrastructure($"Data Source={dbPath}");
+            services.AddInfrastructure(connectionString);
             services.AddScoped<BorrowEquipmentService>();
             services.AddScoped<ReturnEquipmentService>();
             services.AddScoped<EquipmentViewModel>();

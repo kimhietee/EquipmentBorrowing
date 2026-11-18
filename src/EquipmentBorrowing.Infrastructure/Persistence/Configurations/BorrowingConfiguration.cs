@@ -12,9 +12,9 @@ public class BorrowingConfiguration : IEntityTypeConfiguration<Borrowing>
         builder.HasKey(b => b.Id);
         builder.Property(b => b.Id).ValueGeneratedOnAdd();
 
-        builder.Property(b => b.DateBorrowed).IsRequired();
-        builder.Property(b => b.ExpectedReturnDate).IsRequired();
-        builder.Property(b => b.ReturnedAt);
+        builder.Property(b => b.DateBorrowed).IsRequired().HasColumnType("timestamp without time zone");
+        builder.Property(b => b.ExpectedReturnDate).IsRequired().HasColumnType("timestamp without time zone");
+        builder.Property(b => b.ReturnedAt).HasColumnType("timestamp without time zone");
 
         builder.Property(b => b.Status)
                .HasConversion<string>()
