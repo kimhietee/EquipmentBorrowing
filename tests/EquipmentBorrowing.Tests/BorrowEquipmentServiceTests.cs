@@ -15,8 +15,8 @@ public class BorrowEquipmentServiceTests
         });
         var equipment = new InMemoryEquipmentRepository(new[]
         {
-            new Equipment(101, "Digital Multimeter", "Instrument", true),
-            new Equipment(102, "Oscilloscope", "Instrument", false)
+            new Equipment(101, "EQ-101", "Digital Multimeter", "Instrument", true),
+            new Equipment(102, "EQ-102", "Oscilloscope", "Instrument", false)
         });
         return new BorrowEquipmentService(students, equipment,
             new InMemoryBorrowingRepository(), new InMemoryUnitOfWork(), 2);
@@ -53,9 +53,9 @@ public class BorrowEquipmentServiceTests
         var students = new InMemoryStudentRepository(new[] { new Student(1, "2026-0001", "Juan Dela Cruz") });
         var equipmentRepo = new InMemoryEquipmentRepository(new[]
         {
-            new Equipment(101, "Multimeter", "Instrument"),
-            new Equipment(102, "Breadboard", "Component"),
-            new Equipment(103, "Function Generator", "Instrument")
+            new Equipment(101, "EQ-101", "Multimeter", "Instrument"),
+            new Equipment(102, "EQ-102", "Breadboard", "Component"),
+            new Equipment(103, "EQ-103", "Function Generator", "Instrument")
         });
         var service = new BorrowEquipmentService(students, equipmentRepo,
             new InMemoryBorrowingRepository(), new InMemoryUnitOfWork(), 2);

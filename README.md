@@ -166,3 +166,81 @@ _db.Equipment.AsNoTracking().Where(e => e.IsAvailable).OrderBy(e => e.Name).ToLi
 5. **Why foreign keys?** They guarantee every borrowing points to a real student and a real equipment item, and they prevent deleting records that still have borrowing history.
 6. **Why AsNoTracking for read-only queries?** EF does not need to track entities it will never save, which saves memory and time and avoids stale tracked copies.
 7. **If SQLite were replaced?** Only Infrastructure changes: the provider package, the connection string, and possibly a regenerated migration. Domain, Application, ViewModels, and Views stay the same.
+
+---
+
+# Laboratory Activity 4 - Advanced Data-Driven Workflows and PostgreSQL Integration
+
+**Student (Solo):** Tee, Kim Hie F. (`2024302101`)
+
+## 1. Prerequisites and Installation
+
+- **.NET 10 SDK** (`net10.0`)
+- **PostgreSQL** (local instance listening on `localhost:5432`)
+- **Visual Studio** (set `EquipmentBorrowing.Desktop` as Startup Project) or **.NET CLI** (`dotnet-ef` `10.0.12` if running EF commands from CLI)
+
+## 2. Secret-Free Configuration
+
+No database password is stored in `appsettings.json` or committed to Git. `src/EquipmentBorrowing.Desktop/appsettings.json` contains only a placeholder (`Password=SET_IN_USER_SECRETS`).
+
+Configure your local PostgreSQL connection string using **.NET User Secrets** (or an environment variable):
+
+```powershell
+dotnet user-secrets set "ConnectionStrings:Default" "Host=localhost;Port=5432;Database=equipment_borrowing;Username=postgres;Password=YOUR_LOCAL_PASSWORD" --project src/EquipmentBorrowing.Desktop
+```
+
+Or via environment variable for the current terminal session:
+
+```powershell
+$env:ConnectionStrings__Default = "Host=localhost;Port=5432;Database=equipment_borrowing;Username=postgres;Password=YOUR_LOCAL_PASSWORD"
+```
+
+Configuration precedence in `App.axaml.cs` (and `DesignTimeDbContextFactory.cs`):
+1. `appsettings.json` (placeholder)
+2. User Secrets (`UserSecretsId: 79c0898e-6498-434e-b445-f26d621c2941`)
+3. Environment variable `ConnectionStrings__Default`
+
+## 3. Migrations and Initial Data
+
+Apply migrations to a clean PostgreSQL database either from CLI or Visual Studio Package Manager Console (with `EquipmentBorrowing.Desktop` as Startup Project and `EquipmentBorrowing.Infrastructure` as Default Project):
+
+```powershell
+dotnet ef database update --project src/EquipmentBorrowing.Infrastructure --startup-project src/EquipmentBorrowing.Desktop
+```
+
+At application startup (`App.axaml.cs` -> `InfrastructureSetup.InitializeDatabaseAsync` -> `DatabaseInitializer.InitializeAsync`):
+- `db.Database.MigrateAsync()` applies any pending migrations without dropping or recreating existing data.
+- Seed data (3 students, 6 equipment items, 1 active borrowing, 1 returned borrowing) is inserted **only** when the `Students` table is empty.
+- If PostgreSQL is unavailable at startup, the window still opens with a recoverable warning banner and a **Retry Connection** action instead of crashing.
+
+## 4. Running and Testing
+
+- **Visual Studio:** Set `EquipmentBorrowing.Desktop` as Startup Project and press `F5`.
+- **CLI:**
+  ```powershell
+  dotnet run --project src/EquipmentBorrowing.Desktop
+  ```
+- **Automated Unit + Disposable PostgreSQL Integration Tests:**
+  ```powershell
+  dotnet test
+  ```
+  > `PostgresIntegrationTests` creates and drops a separate disposable database (`equipment_borrowing_test`) using your configured local PostgreSQL credentials, leaving your main `equipment_borrowing` database untouched.
+
+## 5. Key Architecture, Context Lifetime, and Transaction Decisions
+
+- **Layering:** Strictly preserved:
+  `Avalonia View` -> `ViewModel` -> `Application Service` -> `Repository Abstraction` -> `EF Core Infrastructure` -> `PostgreSQL`.
+  Views and ViewModels have no `DbContext`, SQL, connection string, or migration references.
+- **Per-Operation `DbContext` Lifetime (`IOperationScopeRunner` / `ServiceScopeRunner`):**
+  `EquipmentBorrowingDbContext`, EF repositories, `EfUnitOfWork`, and all Application Services are registered as `Scoped`. Long-lived ViewModels execute every async query and command inside an isolated `IServiceScope` (`CreateAsyncScope()`). This prevents concurrent `DbContext` collisions during async UI loading, prevents stale `ChangeTracker` caches across retries, and ensures fresh PostgreSQL reads after failures (`BR-15`, `BR-18`, `BR-19`).
+- **Atomic Transactions & Revalidation (`BR-15`, `BR-18`):**
+  Write operations (`BorrowAsync`, `CheckoutMultipleAsync`, `ReturnAsync`, student/equipment registration and updates) execute inside explicit PostgreSQL transactions via `IUnitOfWork` and `TransactionExecutor`:
+  - Eligibility, references, active borrowing count (max 3), item availability, and local calendar return dates (`expectedReturnDate.Date > checkoutDate.Date`) are revalidated inside the transaction boundary.
+  - Known pre-commit errors and in-transaction failures roll back cleanly with zero partial changes and sanitized error messages (never exposing credentials).
+  - Connection loss during `CommitTransactionAsync` is detected via `IPersistenceExceptionClassifier` (`NpgsqlPersistenceExceptionClassifier`) and reported as `OperationStatus.UnknownOutcome` without automatic retry or claiming rollback (`BR-18`).
+- **Normalized Uniqueness (`BR-01`, `BR-05`, `BR-16`):**
+  `Student.NormalizedStudentNumber` and `Equipment.NormalizedIdentifier` store trimmed uppercase keys backed by unique indexes in PostgreSQL, matching domain/application validation.
+
+## 6. Activity 4 Use Case & Traceability Documentation
+
+See [docs/Activity4-Documentation.md](docs/Activity4-Documentation.md) for the updated Use Case Diagram, Use Case Catalog (`UC-01`–`UC-33`), and Traceability & Verification Evidence Matrix (`A01`–`A19`).
