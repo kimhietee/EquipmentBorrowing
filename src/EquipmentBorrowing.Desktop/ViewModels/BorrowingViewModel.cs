@@ -1,44 +1,84 @@
+using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Threading.Tasks;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
-using EquipmentBorrowing.Application.Interfaces;
 using EquipmentBorrowing.Application.Models;
 using EquipmentBorrowing.Application.Services;
+using EquipmentBorrowing.Desktop.Services;
 
 namespace EquipmentBorrowing.Desktop.ViewModels;
 
 public partial class BorrowingsViewModel : ViewModelBase
 {
-    private readonly IBorrowingRepository _borrowingRepository;
-    private readonly ReturnEquipmentService _returnEquipmentService;
+    private readonly IOperationScopeRunner _scopeRunner;
 
     public ObservableCollection<ActiveBorrowingDetails> ActiveBorrowings { get; } = new();
 
     [ObservableProperty] private ActiveBorrowingDetails? selectedBorrowing;
+    [ObservableProperty] private bool isLoading;
+    [ObservableProperty] private bool hasError;
+    [ObservableProperty] private string? errorMessage;
+    [ObservableProperty] private bool isEmpty;
     [ObservableProperty] private string? statusMessage;
+    [ObservableProperty] private bool isUnknownOutcome;
 
-    public BorrowingsViewModel(IBorrowingRepository borrowingRepository, ReturnEquipmentService returnEquipmentService)
+    public BorrowingsViewModel(IOperationScopeRunner scopeRunner)
     {
-        _borrowingRepository = borrowingRepository;
-        _returnEquipmentService = returnEquipmentService;
+        _scopeRunner = scopeRunner;
     }
 
     [RelayCommand]
     private async Task LoadAsync()
     {
-        var items = await _borrowingRepository.GetActiveBorrowingDetailsAsync();
-        ActiveBorrowings.Clear();
-        foreach (var item in items)
-            ActiveBorrowings.Add(item);
+        IsLoading = true;
+        HasError = false;
+        ErrorMessage = null;
+        IsEmpty = false;
+
+        try
+        {
+            var result = await _scopeRunner.RunAsync<BorrowingQueryService, ServiceResult<List<ActiveBorrowingDetails>>>(
+                svc => svc.GetActiveBorrowingsAsync());
+
+            if (!result.Success)
+            {
+                ActiveBorrowings.Clear();
+                HasError = true;
+                ErrorMessage = result.Message;
+                return;
+            }
+
+            ActiveBorrowings.Clear();
+            foreach (var item in result.Data!)
+                ActiveBorrowings.Add(item);
+
+            IsEmpty = ActiveBorrowings.Count == 0;
+        }
+        finally
+        {
+            IsLoading = false;
+        }
     }
 
     [RelayCommand]
     private async Task ReturnAsync()
     {
-        if (SelectedBorrowing is null) { StatusMessage = "Please select a borrowing to return."; return; }
-        var result = await _returnEquipmentService.ReturnAsync(SelectedBorrowing.BorrowingId);
+        IsUnknownOutcome = false;
+        if (SelectedBorrowing is null)
+        {
+            StatusMessage = "Please select an active borrowing to return.";
+            return;
+        }
+
+        var borrowingId = SelectedBorrowing.BorrowingId;
+        var result = await _scopeRunner.RunAsync<ReturnEquipmentService, ReturnResult>(
+            svc => svc.ReturnAsync(borrowingId));
+
         StatusMessage = result.Message;
-        if (result.Success) await LoadAsync();
+        IsUnknownOutcome = result.IsUnknownOutcome;
+
+        if (result.Success || result.Status == OperationStatus.ConflictOrMissing)
+            await LoadAsync();
     }
 }

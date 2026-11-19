@@ -1,28 +1,54 @@
 <UserControl xmlns="https://github.com/avaloniaui"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:vm="using:EquipmentBorrowing.Desktop.ViewModels"
+             xmlns:models="using:EquipmentBorrowing.Application.Models"
              x:Class="EquipmentBorrowing.Desktop.Views.BorrowingsView"
              x:DataType="vm:BorrowingsViewModel">
-    <Grid RowDefinitions="Auto,*,Auto">
-        <TextBlock Grid.Row="0" Text="Active Borrowings" Classes="heading" Margin="0,0,0,10"/>
+    <Grid RowDefinitions="Auto,Auto,*,Auto">
+        <DockPanel Grid.Row="0" Margin="0,0,0,8">
+            <Button DockPanel.Dock="Right" Content="Refresh" Command="{Binding LoadCommand}"/>
+            <TextBlock Text="Active Borrowings" Classes="heading" Margin="0"/>
+        </DockPanel>
 
-        <ListBox Grid.Row="1" ItemsSource="{Binding ActiveBorrowings}" SelectedItem="{Binding SelectedBorrowing}">
+        <StackPanel Grid.Row="1" Spacing="6" Margin="0,0,0,8">
+            <TextBlock Text="Loading active borrowings..." IsVisible="{Binding IsLoading}" FontStyle="Italic"/>
+            <Border IsVisible="{Binding HasError}" Background="#5A2A27" CornerRadius="4" Padding="8">
+                <DockPanel>
+                    <Button DockPanel.Dock="Right" Content="Retry" Command="{Binding LoadCommand}" Margin="8,0,0,0"/>
+                    <TextBlock Text="{Binding ErrorMessage}" Foreground="White" VerticalAlignment="Center" TextWrapping="Wrap"/>
+                </DockPanel>
+            </Border>
+            <Border IsVisible="{Binding IsEmpty}" Background="#2B2B2B" CornerRadius="4" Padding="8">
+                <TextBlock Text="No active borrowings." Foreground="LightGray"/>
+            </Border>
+        </StackPanel>
+
+        <ListBox Grid.Row="2" ItemsSource="{Binding ActiveBorrowings}" SelectedItem="{Binding SelectedBorrowing}">
             <ListBox.ItemTemplate>
-                <DataTemplate>
-                    <StackPanel Orientation="Horizontal" Spacing="10">
-                        <TextBlock Text="{Binding BorrowingId}" Width="40"/>
-                        <TextBlock Text="{Binding StudentName}" Width="140"/>
-                        <TextBlock Text="{Binding EquipmentName}" Width="160"/>
-                        <TextBlock Text="{Binding DateBorrowed, StringFormat={}{0:yyyy-MM-dd}}" Width="100"/>
-                        <TextBlock Text="{Binding ExpectedReturnDate, StringFormat={}{0:yyyy-MM-dd}}"/>
-                    </StackPanel>
+                <DataTemplate x:DataType="models:ActiveBorrowingDetails">
+                    <Grid ColumnDefinitions="50,100,150,90,150,105,105" Margin="2">
+                        <TextBlock Grid.Column="0" Text="{Binding BorrowingId}"/>
+                        <TextBlock Grid.Column="1" Text="{Binding StudentNumber}"/>
+                        <TextBlock Grid.Column="2" Text="{Binding StudentName}" TextTrimming="CharacterEllipsis"/>
+                        <TextBlock Grid.Column="3" Text="{Binding EquipmentIdentifier}" FontWeight="SemiBold"/>
+                        <TextBlock Grid.Column="4" Text="{Binding EquipmentName}" TextTrimming="CharacterEllipsis"/>
+                        <TextBlock Grid.Column="5" Text="{Binding DateBorrowed, StringFormat={}{0:yyyy-MM-dd}}"/>
+                        <TextBlock Grid.Column="6" Text="{Binding ExpectedReturnDate, StringFormat={}{0:yyyy-MM-dd}}"/>
+                    </Grid>
                 </DataTemplate>
             </ListBox.ItemTemplate>
         </ListBox>
 
-        <StackPanel Grid.Row="2" Margin="0,10,0,0" Spacing="6">
-            <Button Content="Return Equipment" Command="{Binding ReturnCommand}" HorizontalAlignment="Stretch"/>
-            <TextBlock Text="{Binding StatusMessage}" Foreground="Orange"/>
+        <StackPanel Grid.Row="3" Margin="0,10,0,0" Spacing="6">
+            <Button Content="Return Selected Equipment" Command="{Binding ReturnCommand}" HorizontalAlignment="Stretch"/>
+            <Border IsVisible="{Binding IsUnknownOutcome}" Background="#6B4F00" CornerRadius="4" Padding="8">
+                <DockPanel>
+                    <Button DockPanel.Dock="Right" Content="Refresh State" Command="{Binding LoadCommand}" Margin="8,0,0,0"/>
+                    <TextBlock Text="{Binding StatusMessage}" Foreground="White" TextWrapping="Wrap"/>
+                </DockPanel>
+            </Border>
+            <TextBlock Text="{Binding StatusMessage}" Foreground="Orange" TextWrapping="Wrap"
+                       IsVisible="{Binding !IsUnknownOutcome}"/>
         </StackPanel>
     </Grid>
 </UserControl>

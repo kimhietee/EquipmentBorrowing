@@ -1,0 +1,58 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:vm="using:EquipmentBorrowing.Desktop.ViewModels"
+             xmlns:models="using:EquipmentBorrowing.Application.Models"
+             x:Class="EquipmentBorrowing.Desktop.Views.BorrowingSearchView"
+             x:DataType="vm:BorrowingSearchViewModel">
+    <Grid RowDefinitions="Auto,Auto,Auto,*">
+        <TextBlock Grid.Row="0" Text="Search, Filter, and Sort Borrowings" Classes="heading"/>
+
+        <WrapPanel Grid.Row="1" Orientation="Horizontal" Margin="0,0,0,10">
+            <TextBox Width="250" Margin="0,0,8,6"
+                     PlaceholderText="Search student name, number, or equipment..."
+                     Text="{Binding SearchText}"/>
+            <ComboBox Width="110" Margin="0,0,8,6"
+                      ItemsSource="{Binding StatusOptions}"
+                      SelectedItem="{Binding SelectedStatus}"/>
+            <ComboBox Width="165" Margin="0,0,8,6"
+                      ItemsSource="{Binding SortFieldOptions}"
+                      SelectedItem="{Binding SelectedSortField}"/>
+            <ComboBox Width="125" Margin="0,0,8,6"
+                      ItemsSource="{Binding SortDirectionOptions}"
+                      SelectedItem="{Binding SelectedSortDirection}"/>
+            <Button Content="Search" Command="{Binding SearchCommand}" Margin="0,0,8,6"/>
+            <Button Content="Clear" Command="{Binding ClearCommand}" Margin="0,0,0,6"/>
+        </WrapPanel>
+
+        <StackPanel Grid.Row="2" Spacing="6" Margin="0,0,0,8">
+            <TextBlock Text="Searching borrowings..." IsVisible="{Binding IsLoading}" FontStyle="Italic"/>
+            <Border IsVisible="{Binding HasError}" Background="#5A2A27" CornerRadius="4" Padding="8">
+                <DockPanel>
+                    <Button DockPanel.Dock="Right" Content="Retry" Command="{Binding SearchCommand}" Margin="8,0,0,0"/>
+                    <TextBlock Text="{Binding ErrorMessage}" Foreground="White" VerticalAlignment="Center" TextWrapping="Wrap"/>
+                </DockPanel>
+            </Border>
+            <Border IsVisible="{Binding IsEmpty}" Background="#2B2B2B" CornerRadius="4" Padding="8">
+                <TextBlock Text="No borrowing records match your search and filter criteria." Foreground="LightGray"/>
+            </Border>
+        </StackPanel>
+
+        <ListBox Grid.Row="3" ItemsSource="{Binding Results}">
+            <ListBox.ItemTemplate>
+                <DataTemplate x:DataType="models:BorrowingRecordDetails">
+                    <Grid ColumnDefinitions="45,95,130,85,135,95,95,95,75" Margin="2">
+                        <TextBlock Grid.Column="0" Text="{Binding BorrowingId}"/>
+                        <TextBlock Grid.Column="1" Text="{Binding StudentNumber}"/>
+                        <TextBlock Grid.Column="2" Text="{Binding StudentName}" TextTrimming="CharacterEllipsis"/>
+                        <TextBlock Grid.Column="3" Text="{Binding EquipmentIdentifier}" FontWeight="SemiBold"/>
+                        <TextBlock Grid.Column="4" Text="{Binding EquipmentName}" TextTrimming="CharacterEllipsis"/>
+                        <TextBlock Grid.Column="5" Text="{Binding DateBorrowed, StringFormat={}{0:yyyy-MM-dd}}"/>
+                        <TextBlock Grid.Column="6" Text="{Binding ExpectedReturnDate, StringFormat={}{0:yyyy-MM-dd}}"/>
+                        <TextBlock Grid.Column="7" Text="{Binding ReturnedAt, StringFormat={}{0:yyyy-MM-dd}, TargetNullValue='—'}"/>
+                        <TextBlock Grid.Column="8" Text="{Binding Status}"/>
+                    </Grid>
+                </DataTemplate>
+            </ListBox.ItemTemplate>
+        </ListBox>
+    </Grid>
+</UserControl>

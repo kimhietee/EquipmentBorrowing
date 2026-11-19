@@ -1,0 +1,123 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:vm="using:EquipmentBorrowing.Desktop.ViewModels"
+             xmlns:domain="using:EquipmentBorrowing.Domain"
+             xmlns:models="using:EquipmentBorrowing.Application.Models"
+             x:Class="EquipmentBorrowing.Desktop.Views.HistoryView"
+             x:DataType="vm:HistoryViewModel">
+    <Grid RowDefinitions="Auto,Auto,*">
+        <DockPanel Grid.Row="0" Margin="0,0,0,8">
+            <Button DockPanel.Dock="Right" Content="Refresh Lists" Command="{Binding LoadCommand}"/>
+            <TextBlock Text="Borrowing Histories" Classes="heading" Margin="0"/>
+        </DockPanel>
+
+        <StackPanel Grid.Row="1" Spacing="6" Margin="0,0,0,8">
+            <TextBlock Text="Loading students and equipment..." IsVisible="{Binding IsLoadingSubjects}" FontStyle="Italic"/>
+            <Border IsVisible="{Binding SubjectErrorMessage, Converter={x:Static StringConverters.IsNotNullOrEmpty}}"
+                    Background="#5A2A27" CornerRadius="4" Padding="8">
+                <DockPanel>
+                    <Button DockPanel.Dock="Right" Content="Retry" Command="{Binding LoadCommand}" Margin="8,0,0,0"/>
+                    <TextBlock Text="{Binding SubjectErrorMessage}" Foreground="White" VerticalAlignment="Center" TextWrapping="Wrap"/>
+                </DockPanel>
+            </Border>
+        </StackPanel>
+
+        <TabControl Grid.Row="2">
+            <TabItem Header="Student History">
+                <Grid RowDefinitions="Auto,Auto,*" Margin="0,8,0,0">
+                    <DockPanel Grid.Row="0" Margin="0,0,0,8">
+                        <Button DockPanel.Dock="Right" Content="Reload" Command="{Binding LoadStudentHistoryCommand}" Margin="8,0,0,0"/>
+                        <ComboBox ItemsSource="{Binding Students}" SelectedItem="{Binding SelectedStudent}"
+                                  PlaceholderText="Select student to view history" HorizontalAlignment="Stretch">
+                            <ComboBox.ItemTemplate>
+                                <DataTemplate x:DataType="domain:Student">
+                                    <TextBlock>
+                                        <Run Text="{Binding StudentNumber}"/>
+                                        <Run Text=" - "/>
+                                        <Run Text="{Binding Name}"/>
+                                    </TextBlock>
+                                </DataTemplate>
+                            </ComboBox.ItemTemplate>
+                        </ComboBox>
+                    </DockPanel>
+
+                    <StackPanel Grid.Row="1" Spacing="6" Margin="0,0,0,8">
+                        <TextBlock Text="Loading student borrowing history..." IsVisible="{Binding IsStudentHistoryLoading}" FontStyle="Italic"/>
+                        <Border IsVisible="{Binding HasStudentHistoryError}" Background="#5A2A27" CornerRadius="4" Padding="8">
+                            <DockPanel>
+                                <Button DockPanel.Dock="Right" Content="Retry" Command="{Binding LoadStudentHistoryCommand}" Margin="8,0,0,0"/>
+                                <TextBlock Text="{Binding StudentHistoryErrorMessage}" Foreground="White" VerticalAlignment="Center" TextWrapping="Wrap"/>
+                            </DockPanel>
+                        </Border>
+                        <Border IsVisible="{Binding IsStudentHistoryEmpty}" Background="#2B2B2B" CornerRadius="4" Padding="8">
+                            <TextBlock Text="No borrowing history found for this student." Foreground="LightGray"/>
+                        </Border>
+                    </StackPanel>
+
+                    <ListBox Grid.Row="2" ItemsSource="{Binding StudentHistory}">
+                        <ListBox.ItemTemplate>
+                            <DataTemplate x:DataType="models:BorrowingRecordDetails">
+                                <Grid ColumnDefinitions="90,170,105,105,85,110" Margin="2">
+                                    <TextBlock Grid.Column="0" Text="{Binding EquipmentIdentifier}" FontWeight="SemiBold"/>
+                                    <TextBlock Grid.Column="1" Text="{Binding EquipmentName}" TextTrimming="CharacterEllipsis"/>
+                                    <TextBlock Grid.Column="2" Text="{Binding DateBorrowed, StringFormat={}{0:yyyy-MM-dd}}"/>
+                                    <TextBlock Grid.Column="3" Text="{Binding ExpectedReturnDate, StringFormat={}{0:yyyy-MM-dd}}"/>
+                                    <TextBlock Grid.Column="4" Text="{Binding Status}"/>
+                                    <TextBlock Grid.Column="5" Text="{Binding ReturnedAt, StringFormat={}{0:yyyy-MM-dd}, TargetNullValue='—'}"/>
+                                </Grid>
+                            </DataTemplate>
+                        </ListBox.ItemTemplate>
+                    </ListBox>
+                </Grid>
+            </TabItem>
+
+            <TabItem Header="Equipment History">
+                <Grid RowDefinitions="Auto,Auto,*" Margin="0,8,0,0">
+                    <DockPanel Grid.Row="0" Margin="0,0,0,8">
+                        <Button DockPanel.Dock="Right" Content="Reload" Command="{Binding LoadEquipmentHistoryCommand}" Margin="8,0,0,0"/>
+                        <ComboBox ItemsSource="{Binding EquipmentItems}" SelectedItem="{Binding SelectedEquipment}"
+                                  PlaceholderText="Select equipment item to view history" HorizontalAlignment="Stretch">
+                            <ComboBox.ItemTemplate>
+                                <DataTemplate x:DataType="domain:Equipment">
+                                    <TextBlock>
+                                        <Run Text="{Binding Identifier}"/>
+                                        <Run Text=" - "/>
+                                        <Run Text="{Binding Name}"/>
+                                    </TextBlock>
+                                </DataTemplate>
+                            </ComboBox.ItemTemplate>
+                        </ComboBox>
+                    </DockPanel>
+
+                    <StackPanel Grid.Row="1" Spacing="6" Margin="0,0,0,8">
+                        <TextBlock Text="Loading equipment borrowing history..." IsVisible="{Binding IsEquipmentHistoryLoading}" FontStyle="Italic"/>
+                        <Border IsVisible="{Binding HasEquipmentHistoryError}" Background="#5A2A27" CornerRadius="4" Padding="8">
+                            <DockPanel>
+                                <Button DockPanel.Dock="Right" Content="Retry" Command="{Binding LoadEquipmentHistoryCommand}" Margin="8,0,0,0"/>
+                                <TextBlock Text="{Binding EquipmentHistoryErrorMessage}" Foreground="White" VerticalAlignment="Center" TextWrapping="Wrap"/>
+                            </DockPanel>
+                        </Border>
+                        <Border IsVisible="{Binding IsEquipmentHistoryEmpty}" Background="#2B2B2B" CornerRadius="4" Padding="8">
+                            <TextBlock Text="No borrowing history found for this equipment item." Foreground="LightGray"/>
+                        </Border>
+                    </StackPanel>
+
+                    <ListBox Grid.Row="2" ItemsSource="{Binding EquipmentHistory}">
+                        <ListBox.ItemTemplate>
+                            <DataTemplate x:DataType="models:BorrowingRecordDetails">
+                                <Grid ColumnDefinitions="105,165,105,105,85,110" Margin="2">
+                                    <TextBlock Grid.Column="0" Text="{Binding StudentNumber}"/>
+                                    <TextBlock Grid.Column="1" Text="{Binding StudentName}" TextTrimming="CharacterEllipsis"/>
+                                    <TextBlock Grid.Column="2" Text="{Binding DateBorrowed, StringFormat={}{0:yyyy-MM-dd}}"/>
+                                    <TextBlock Grid.Column="3" Text="{Binding ExpectedReturnDate, StringFormat={}{0:yyyy-MM-dd}}"/>
+                                    <TextBlock Grid.Column="4" Text="{Binding Status}"/>
+                                    <TextBlock Grid.Column="5" Text="{Binding ReturnedAt, StringFormat={}{0:yyyy-MM-dd}, TargetNullValue='—'}"/>
+                                </Grid>
+                            </DataTemplate>
+                        </ListBox.ItemTemplate>
+                    </ListBox>
+                </Grid>
+            </TabItem>
+        </TabControl>
+    </Grid>
+</UserControl>

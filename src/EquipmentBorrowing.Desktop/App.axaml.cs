@@ -1,14 +1,13 @@
-using Microsoft.Extensions.Configuration;
 using System;
-using System.IO;
 using System.Threading.Tasks;
-using Avalonia;
 using Avalonia.Controls.ApplicationLifetimes;
 using Avalonia.Markup.Xaml;
 using EquipmentBorrowing.Application.Services;
+using EquipmentBorrowing.Desktop.Services;
 using EquipmentBorrowing.Desktop.ViewModels;
 using EquipmentBorrowing.Desktop.Views;
 using EquipmentBorrowing.Infrastructure;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace EquipmentBorrowing.Desktop;
@@ -24,8 +23,6 @@ public partial class App : Avalonia.Application
     {
         if (ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktop)
         {
-            // Read config: appsettings.json (placeholder), then user-secrets (real password),
-            // then environment variables. Later sources override earlier ones.
             var configuration = new ConfigurationBuilder()
                 .SetBasePath(AppContext.BaseDirectory)
                 .AddJsonFile("appsettings.json", optional: false)
@@ -36,29 +33,58 @@ public partial class App : Avalonia.Application
             var connectionString = configuration.GetConnectionString("Default")
                 ?? throw new InvalidOperationException("Missing ConnectionStrings:Default.");
 
-            // Composition root.
             var services = new ServiceCollection();
             services.AddInfrastructure(connectionString);
+
+            // Application services are Scoped so each operation gets its own fresh DbContext.
             services.AddScoped<BorrowEquipmentService>();
             services.AddScoped<ReturnEquipmentService>();
-            services.AddScoped<EquipmentViewModel>();
-            services.AddScoped<BorrowingsViewModel>();
-            services.AddScoped<MainViewModel>();
+            services.AddScoped<StudentManagementService>();
+            services.AddScoped<EquipmentManagementService>();
+            services.AddScoped<BorrowingQueryService>();
 
-            // A desktop app has no per-request scope, so one scope lives for the whole app.
-            var scope = services.BuildServiceProvider().CreateScope();
+            // Desktop scope runner + long-lived navigation ViewModels.
+            services.AddSingleton<IOperationScopeRunner, ServiceScopeRunner>();
+            services.AddSingleton<EquipmentViewModel>();
+            services.AddSingleton<MultiCheckoutViewModel>();
+            services.AddSingleton<BorrowingsViewModel>();
+            services.AddSingleton<BorrowingSearchViewModel>();
+            services.AddSingleton<HistoryViewModel>();
+            services.AddSingleton<StudentsViewModel>();
+            services.AddSingleton<MainViewModel>();
 
-            // Apply pending migrations and seed (only if empty) before showing the UI.
-            Task.Run(() => InfrastructureSetup.InitializeDatabaseAsync(scope.ServiceProvider))
+            var rootProvider = services.BuildServiceProvider();
+
+            bool initialized = Task.Run(() => TryInitializeDatabaseAsync(rootProvider))
                 .GetAwaiter().GetResult();
+
+            var mainViewModel = rootProvider.GetRequiredService<MainViewModel>();
+            mainViewModel.ConfigureStartupState(
+                initialized,
+                initialized ? null : "Could not connect to PostgreSQL at startup. Start PostgreSQL and click Retry Connection.",
+                () => TryInitializeDatabaseAsync(rootProvider));
 
             desktop.MainWindow = new MainWindow
             {
-                DataContext = scope.ServiceProvider.GetRequiredService<MainViewModel>(),
+                DataContext = mainViewModel,
             };
-            desktop.Exit += (_, _) => scope.Dispose();
+            desktop.Exit += (_, _) => rootProvider.Dispose();
         }
 
         base.OnFrameworkInitializationCompleted();
+    }
+
+    private static async Task<bool> TryInitializeDatabaseAsync(IServiceProvider rootProvider)
+    {
+        try
+        {
+            await using var scope = rootProvider.CreateAsyncScope();
+            await InfrastructureSetup.InitializeDatabaseAsync(scope.ServiceProvider).ConfigureAwait(false);
+            return true;
+        }
+        catch
+        {
+            return false;
+        }
     }
 }

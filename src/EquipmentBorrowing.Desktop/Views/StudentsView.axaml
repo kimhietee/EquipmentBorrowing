@@ -1,0 +1,70 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:vm="using:EquipmentBorrowing.Desktop.ViewModels"
+             xmlns:domain="using:EquipmentBorrowing.Domain"
+             x:Class="EquipmentBorrowing.Desktop.Views.StudentsView"
+             x:DataType="vm:StudentsViewModel">
+    <Grid RowDefinitions="Auto,Auto,*,Auto,Auto">
+        <DockPanel Grid.Row="0" Margin="0,0,0,8">
+            <Button DockPanel.Dock="Right" Content="Refresh" Command="{Binding LoadCommand}"/>
+            <TextBlock Text="Student Management" Classes="heading" Margin="0"/>
+        </DockPanel>
+
+        <StackPanel Grid.Row="1" Spacing="6" Margin="0,0,0,8">
+            <TextBlock Text="Loading students..." IsVisible="{Binding IsLoading}" FontStyle="Italic"/>
+            <Border IsVisible="{Binding HasError}" Background="#5A2A27" CornerRadius="4" Padding="8">
+                <DockPanel>
+                    <Button DockPanel.Dock="Right" Content="Retry" Command="{Binding LoadCommand}" Margin="8,0,0,0"/>
+                    <TextBlock Text="{Binding ErrorMessage}" Foreground="White" VerticalAlignment="Center" TextWrapping="Wrap"/>
+                </DockPanel>
+            </Border>
+            <Border IsVisible="{Binding IsEmpty}" Background="#2B2B2B" CornerRadius="4" Padding="8">
+                <TextBlock Text="No students registered yet." Foreground="LightGray"/>
+            </Border>
+        </StackPanel>
+
+        <ListBox Grid.Row="2" ItemsSource="{Binding Students}" SelectedItem="{Binding SelectedStudent}">
+            <ListBox.ItemTemplate>
+                <DataTemplate x:DataType="domain:Student">
+                    <Grid ColumnDefinitions="45,115,180,*,110" Margin="2">
+                        <TextBlock Grid.Column="0" Text="{Binding Id}"/>
+                        <TextBlock Grid.Column="1" Text="{Binding StudentNumber}" FontWeight="SemiBold"/>
+                        <TextBlock Grid.Column="2" Text="{Binding Name}" TextTrimming="CharacterEllipsis"/>
+                        <TextBlock Grid.Column="3" Text="{Binding Contact, TargetNullValue='—'}" Foreground="Gray" TextTrimming="CharacterEllipsis" Margin="8,0"/>
+                        <TextBlock Grid.Column="4" Text="{Binding IsAllowedToBorrow, StringFormat='Eligible: {0}'}"/>
+                    </Grid>
+                </DataTemplate>
+            </ListBox.ItemTemplate>
+        </ListBox>
+
+        <Border Grid.Row="3" BorderBrush="#3A3A3A" BorderThickness="1" CornerRadius="4" Padding="10" Margin="0,12,0,0">
+            <StackPanel Spacing="6">
+                <TextBlock Text="Register, Edit, or Change Borrowing Eligibility" FontWeight="Bold"/>
+                <Grid ColumnDefinitions="*,12,*,12,*">
+                    <TextBox Grid.Column="0" PlaceholderText="Institutional Student Number" Text="{Binding StudentNumberInput}"/>
+                    <TextBox Grid.Column="2" PlaceholderText="Full Name" Text="{Binding StudentNameInput}"/>
+                    <TextBox Grid.Column="4" PlaceholderText="Optional Contact (blank clears)" Text="{Binding StudentContactInput}"/>
+                </Grid>
+                <TextBlock Text="{Binding SelectedEligibilityDisplay}" FontSize="12" Foreground="Gray"/>
+                <WrapPanel Orientation="Horizontal">
+                    <Button Content="Register Student" Command="{Binding RegisterStudentCommand}" Margin="0,0,8,0"/>
+                    <Button Content="Save Student Changes" Command="{Binding UpdateStudentCommand}" Margin="0,0,8,0"/>
+                    <Button Content="Clear Form" Command="{Binding ClearFormCommand}" Margin="0,0,16,0"/>
+                    <Button Content="Permit Borrowing" Command="{Binding PermitStudentCommand}" Margin="0,0,8,0"/>
+                    <Button Content="Restrict Borrowing" Command="{Binding RestrictStudentCommand}"/>
+                </WrapPanel>
+            </StackPanel>
+        </Border>
+
+        <StackPanel Grid.Row="4" Margin="0,8,0,0" Spacing="4">
+            <Border IsVisible="{Binding IsUnknownOutcome}" Background="#6B4F00" CornerRadius="4" Padding="8">
+                <DockPanel>
+                    <Button DockPanel.Dock="Right" Content="Refresh State" Command="{Binding LoadCommand}" Margin="8,0,0,0"/>
+                    <TextBlock Text="{Binding StatusMessage}" Foreground="White" TextWrapping="Wrap"/>
+                </DockPanel>
+            </Border>
+            <TextBlock Text="{Binding StatusMessage}" Foreground="Orange" TextWrapping="Wrap"
+                       IsVisible="{Binding !IsUnknownOutcome}"/>
+        </StackPanel>
+    </Grid>
+</UserControl>

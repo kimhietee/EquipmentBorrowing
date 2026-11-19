@@ -3,19 +3,36 @@
         xmlns:vm="using:EquipmentBorrowing.Desktop.ViewModels"
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-        mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
+        mc:Ignorable="d" d:DesignWidth="1050" d:DesignHeight="680"
+        Width="1050" Height="680" MinWidth="880" MinHeight="560"
         x:Class="EquipmentBorrowing.Desktop.Views.MainWindow"
         x:DataType="vm:MainViewModel"
         Icon="/Assets/avalonia-logo.ico"
-        Title="EquipmentBorrowing.Desktop">
+        Title="Campus Equipment Borrowing System">
 
-    <Grid ColumnDefinitions="180,*">
-    <StackPanel Grid.Column="0" Background="#1e1e1e" Spacing="6" Margin="10">
-        <TextBlock Text="Campus Equipment" FontWeight="Bold" Foreground="White" Margin="0,0,0,12"/>
-        <Button Content="Equipment" Command="{Binding ShowEquipmentCommand}" HorizontalAlignment="Stretch"/>
-        <Button Content="Active Borrowings" Command="{Binding ShowBorrowingsCommand}" HorizontalAlignment="Stretch"/>
-    </StackPanel>
-    <ContentControl Grid.Column="1" Content="{Binding CurrentPage}" Margin="16"/>
-</Grid>
+    <Grid ColumnDefinitions="200,*">
+        <StackPanel Grid.Column="0" Background="#1e1e1e" Spacing="4" Margin="10">
+            <TextBlock Text="Campus Equipment" FontWeight="Bold" FontSize="15" Foreground="White" Margin="4,4,4,12"/>
+            <Button Content="Equipment Catalog" Command="{Binding ShowEquipmentCommand}" HorizontalAlignment="Stretch"/>
+            <Button Content="Multi-Item Checkout" Command="{Binding ShowMultiCheckoutCommand}" HorizontalAlignment="Stretch"/>
+            <Button Content="Active Borrowings" Command="{Binding ShowBorrowingsCommand}" HorizontalAlignment="Stretch"/>
+            <Button Content="Search Borrowings" Command="{Binding ShowSearchCommand}" HorizontalAlignment="Stretch"/>
+            <Button Content="Histories" Command="{Binding ShowHistoryCommand}" HorizontalAlignment="Stretch"/>
+            <Button Content="Students" Command="{Binding ShowStudentsCommand}" HorizontalAlignment="Stretch"/>
+        </StackPanel>
 
+        <Grid Grid.Column="1" RowDefinitions="Auto,*" Margin="16">
+            <Border Grid.Row="0" IsVisible="{Binding HasStartupWarning}"
+                    Background="#5A2A27" CornerRadius="4" Padding="10" Margin="0,0,0,10">
+                <DockPanel>
+                    <Button DockPanel.Dock="Right" Content="Retry Connection"
+                            Command="{Binding RetryDatabaseInitCommand}" Margin="10,0,0,0"/>
+                    <TextBlock Text="{Binding StartupWarningMessage}" Foreground="White"
+                               VerticalAlignment="Center" TextWrapping="Wrap"/>
+                </DockPanel>
+            </Border>
+
+            <ContentControl Grid.Row="1" Content="{Binding CurrentPage}"/>
+        </Grid>
+    </Grid>
 </Window>
