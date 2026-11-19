@@ -12,11 +12,13 @@ public class EquipmentConfiguration : IEntityTypeConfiguration<Equipment>
         builder.HasKey(e => e.Id);
         builder.Property(e => e.Id).ValueGeneratedOnAdd();
 
+        builder.Property(e => e.Identifier).IsRequired().HasMaxLength(32);
+        builder.Property(e => e.NormalizedIdentifier).IsRequired().HasMaxLength(32);
         builder.Property(e => e.Name).IsRequired().HasMaxLength(100);
-        builder.Property(e => e.Type).IsRequired().HasMaxLength(50);
+        builder.Property(e => e.Description).IsRequired(false).HasMaxLength(250);
         builder.Property(e => e.IsAvailable).IsRequired();
 
-        builder.HasIndex(e => e.Name).IsUnique();
-        builder.HasIndex(e => e.Type);
+        builder.HasIndex(e => e.NormalizedIdentifier).IsUnique();
+        builder.HasIndex(e => e.Name);
     }
 }

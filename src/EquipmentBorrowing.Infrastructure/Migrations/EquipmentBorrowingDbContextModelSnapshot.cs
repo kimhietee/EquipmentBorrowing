@@ -69,6 +69,15 @@ namespace EquipmentBorrowing.Infrastructure.Migrations
 
                     NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
 
+                    b.Property<string>("Description")
+                        .HasMaxLength(250)
+                        .HasColumnType("character varying(250)");
+
+                    b.Property<string>("Identifier")
+                        .IsRequired()
+                        .HasMaxLength(32)
+                        .HasColumnType("character varying(32)");
+
                     b.Property<bool>("IsAvailable")
                         .HasColumnType("boolean");
 
@@ -77,17 +86,17 @@ namespace EquipmentBorrowing.Infrastructure.Migrations
                         .HasMaxLength(100)
                         .HasColumnType("character varying(100)");
 
-                    b.Property<string>("Type")
+                    b.Property<string>("NormalizedIdentifier")
                         .IsRequired()
-                        .HasMaxLength(50)
-                        .HasColumnType("character varying(50)");
+                        .HasMaxLength(32)
+                        .HasColumnType("character varying(32)");
 
                     b.HasKey("Id");
 
-                    b.HasIndex("Name")
-                        .IsUnique();
+                    b.HasIndex("Name");
 
-                    b.HasIndex("Type");
+                    b.HasIndex("NormalizedIdentifier")
+                        .IsUnique();
 
                     b.ToTable("Equipment", (string)null);
                 });
@@ -100,6 +109,10 @@ namespace EquipmentBorrowing.Infrastructure.Migrations
 
                     NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
 
+                    b.Property<string>("Contact")
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
+
                     b.Property<bool>("IsAllowedToBorrow")
                         .HasColumnType("boolean");
 
@@ -108,14 +121,21 @@ namespace EquipmentBorrowing.Infrastructure.Migrations
                         .HasMaxLength(100)
                         .HasColumnType("character varying(100)");
 
+                    b.Property<string>("NormalizedStudentNumber")
+                        .IsRequired()
+                        .HasMaxLength(32)
+                        .HasColumnType("character varying(32)");
+
                     b.Property<string>("StudentNumber")
                         .IsRequired()
-                        .HasMaxLength(20)
-                        .HasColumnType("character varying(20)");
+                        .HasMaxLength(32)
+                        .HasColumnType("character varying(32)");
 
                     b.HasKey("Id");
 
-                    b.HasIndex("StudentNumber")
+                    b.HasIndex("Name");
+
+                    b.HasIndex("NormalizedStudentNumber")
                         .IsUnique();
 
                     b.ToTable("Students", (string)null);
