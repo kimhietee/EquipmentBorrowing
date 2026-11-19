@@ -14,5 +14,15 @@ public class EfStudentRepository : IStudentRepository
         => _db.Students.FirstOrDefaultAsync(s => s.Id == id, cancellationToken);
 
     public Task<List<Student>> GetAllAsync(CancellationToken cancellationToken = default)
-        => _db.Students.AsNoTracking().OrderBy(s => s.Name).ToListAsync(cancellationToken);
+        => _db.Students.AsNoTracking()
+              .OrderBy(s => s.Name)
+              .ThenBy(s => s.Id)
+              .ToListAsync(cancellationToken);
+
+    public Task<Student?> FindByNormalizedStudentNumberAsync(string normalizedStudentNumber, CancellationToken cancellationToken = default)
+        => _db.Students.AsNoTracking()
+              .FirstOrDefaultAsync(s => s.NormalizedStudentNumber == normalizedStudentNumber, cancellationToken);
+
+    public async Task AddAsync(Student student, CancellationToken cancellationToken = default)
+        => await _db.Students.AddAsync(student, cancellationToken);
 }

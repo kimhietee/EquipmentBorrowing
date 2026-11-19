@@ -13,12 +13,28 @@ public class EfEquipmentRepository : IEquipmentRepository
     public Task<Equipment?> GetByIdAsync(int id, CancellationToken cancellationToken = default)
         => _db.Equipment.FirstOrDefaultAsync(e => e.Id == id, cancellationToken);
 
+    public Task<List<Equipment>> GetByIdsAsync(IReadOnlyCollection<int> ids, CancellationToken cancellationToken = default)
+        => _db.Equipment
+              .Where(e => ids.Contains(e.Id))
+              .ToListAsync(cancellationToken);
+
     public Task<List<Equipment>> GetAllAsync(CancellationToken cancellationToken = default)
-        => _db.Equipment.AsNoTracking().OrderBy(e => e.Name).ToListAsync(cancellationToken);
+        => _db.Equipment.AsNoTracking()
+              .OrderBy(e => e.Identifier)
+              .ThenBy(e => e.Id)
+              .ToListAsync(cancellationToken);
 
     public Task<List<Equipment>> GetAvailableAsync(CancellationToken cancellationToken = default)
         => _db.Equipment.AsNoTracking()
               .Where(e => e.IsAvailable)
-              .OrderBy(e => e.Name)
+              .OrderBy(e => e.Identifier)
+              .ThenBy(e => e.Id)
               .ToListAsync(cancellationToken);
+
+    public Task<Equipment?> FindByNormalizedIdentifierAsync(string normalizedIdentifier, CancellationToken cancellationToken = default)
+        => _db.Equipment.AsNoTracking()
+              .FirstOrDefaultAsync(e => e.NormalizedIdentifier == normalizedIdentifier, cancellationToken);
+
+    public async Task AddAsync(Equipment equipment, CancellationToken cancellationToken = default)
+        => await _db.Equipment.AddAsync(equipment, cancellationToken);
 }

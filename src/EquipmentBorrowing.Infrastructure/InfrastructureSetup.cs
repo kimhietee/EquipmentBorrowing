@@ -11,6 +11,7 @@ public static class InfrastructureSetup
     public static IServiceCollection AddInfrastructure(this IServiceCollection services, string connectionString)
     {
         services.AddDbContext<EquipmentBorrowingDbContext>(o => o.UseNpgsql(connectionString));
+        services.AddSingleton<IPersistenceExceptionClassifier, NpgsqlPersistenceExceptionClassifier>();
         services.AddScoped<IStudentRepository, EfStudentRepository>();
         services.AddScoped<IEquipmentRepository, EfEquipmentRepository>();
         services.AddScoped<IBorrowingRepository, EfBorrowingRepository>();
